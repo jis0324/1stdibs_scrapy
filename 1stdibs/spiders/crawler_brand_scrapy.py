@@ -26,7 +26,7 @@ class OstdibsSearchSpider(scrapy.Spider):
     name = '1stdibs_brand_scrapy_crawler'
     allowed_domains = ['1stdibs.com']
     custom_settings = {
-        'DOWNLOAD_DELAY': 1,
+        'DOWNLOAD_DELAY': 2,
     }
 
     def __init__(self, *args, **kwargs):
@@ -240,12 +240,16 @@ class OstdibsSearchSpider(scrapy.Spider):
     def start_requests(self):
         for brand in self.brand_list:
             url_pattern = re.sub(r'\s*\(furniture\)', "", brand.strip())
+            meta = {"brand": url_pattern}
             url_pattern = re.sub(r'[^\w]+', "%20", url_pattern.strip())
             item_type = ["21st-pre-owned", "antique-vintage"]
             for item in item_type:
-                url = 'https://www.1stdibs.com/search/furniture/?item-type={item_type}&oq={pattern}&q={pattern}&production-time-frame=available-now'.format(item_type=item, pattern=url_pattern.lower())
+                if "baxter" in brand.lower():
+                    url = 'https://www.1stdibs.com/search/furniture/?creator=baxter-furniture&item-type={item_type}&oq={pattern}&q={pattern}&production-time-frame=available-now'.format(item_type=item, pattern=url_pattern.lower())
+                else:
+                    url = 'https://www.1stdibs.com/search/furniture/?item-type={item_type}&oq={pattern}&q={pattern}&production-time-frame=available-now'.format(item_type=item, pattern=url_pattern.lower())
                 print("Requested to ", url)
-                yield Request(url, callback=self.parse_listing_pages, meta={"brand": brand})
+                yield Request(url, callback=self.parse_listing_pages, meta=meta)
 
     # parse listing pages
     def parse_listing_pages(self, response):
@@ -288,13 +292,7 @@ class OstdibsSearchSpider(scrapy.Spider):
             
             product_json = json.loads(res_content)
            
-            try:
-                result_dict["BRAND"] = response.xpath('//span[@data-tn="pdp-spec-detail-creator"]/a/text()').get()
-            except:
-                pass
-
-            if not result_dict["BRAND"]:
-                result_dict["BRAND"] = brand
+            result_dict["BRAND"] = brand
 
             try:
                 result_dict["PRODUCT_NAME"] = product_json["name"]
@@ -395,7 +393,7 @@ class OstdibsSearchSpider(scrapy.Spider):
             else:
                 self.create_version_result_file()
 
-            # self.update_summary_file(result_dict)
+            self.update_summary_file(result_dict)
                 
         except:
             print(traceback.print_exc())
