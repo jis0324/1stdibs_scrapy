@@ -291,8 +291,23 @@ class OstdibsSearchSpider(scrapy.Spider):
             res_content = res_content + "}"
             
             product_json = json.loads(res_content)
-           
-            result_dict["BRAND"] = brand
+
+            try:
+                brand_list = response.xpath("//div[@data-tn='pdp-spec-creator']/span/a//text()").getall()
+                brand_find_flag = False
+                for product_brand in brand_list:
+                    if brand_find_flag:
+                        break
+                    for identified_brand in self.brand_list:
+                        if product_brand.replace(" ", "").lower() in identified_brand.replace(" ", "").lower():
+                            result_dict["BRAND"] = identified_brand
+                            brand_find_flag = True
+                            break
+            except:
+                pass
+
+            if not result_dict["BRAND"]:
+                return
 
             try:
                 result_dict["PRODUCT_NAME"] = product_json["name"]
