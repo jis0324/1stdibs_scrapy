@@ -282,7 +282,7 @@ class OstdibsSearchSpider(scrapy.Spider):
         try:
             result_dict = self.baseItem()
             
-            brand = response.meta["brand"]
+            # brand = response.meta["brand"]
             product_json = ""
             res_content = response.text
             res_content = res_content.split('type="application/ld+json">[')[1]
@@ -356,7 +356,10 @@ class OstdibsSearchSpider(scrapy.Spider):
                 pass
 
             try:
-                result_dict["CURRENT_REQUESTED_PRICE"] = product_json["offers"]["price"]
+                # result_dict["CURRENT_REQUESTED_PRICE"] = product_json["offers"]["price"]
+                result_dict["CURRENT_REQUESTED_PRICE"] = response.xpath("//div[@data-tn='price-retail']/span[@data-tn='price-amount']/text()").get().strip()
+                if result_dict["CURRENT_REQUESTED_PRICE"] and not re.search(r"\$", result_dict["CURRENT_REQUESTED_PRICE"]):
+                    return
             except:
                 pass
 
